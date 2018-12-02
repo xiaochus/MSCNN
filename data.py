@@ -5,6 +5,24 @@ import numpy as np
 import scipy.io as sio
 from multiprocessing.dummy import Pool as ThreadPool
 
+import matplotlib.pyplot as plt
+
+
+def visualization(img, dmap):
+    img *= 255
+    img = img[..., ::-1]
+
+    plt.figure()
+
+    plt.subplot(121)
+    plt.imshow(img)
+
+    plt.subplot(122)
+    plt.imshow(dmap.reshape(56, 56))
+    plt.colorbar()
+
+    plt.show()
+
 
 def read_annotations():
     """read annotation data.
@@ -68,7 +86,7 @@ def get_data(i, size, annotations):
 
     Arguments:
         i: int, image_key.
-        size: tuple, input shape of network.
+        size: int, input shape of network.
         annotations: ndarray, annotations.
 
     Returns:
@@ -78,20 +96,22 @@ def get_data(i, size, annotations):
     img = read_img(i)
     density_map = map_pixels(img, i, annotations)
 
-    img = cv2.resize(img, size)
+    img = cv2.resize(img, (size, size))
 
-    ms = int(img.shape[0] / 4)
+    ms = int(size / 4)
     density_map = cv2.resize(density_map, (ms, ms))
+    density_map = np.expand_dims(density_map, axis=-1)
 
     return img, density_map
 
 
-def generator(batch, size):
+def generator(indices, batch, size):
     """data generator.
 
     Arguments:
+        indices: list, image_key.
         batch: int, batch size.
-        size: tuple, input shape of network.
+        size: int, input shape of network.
 
     Returns:
         images: ndarray, batch images.
@@ -101,7 +121,6 @@ def generator(batch, size):
 
     i = 0
     n = len(count)
-    indices = range(n)
 
     if batch > n:
         raise Exception('Batch size {} is larger than the number of dataset {}!'.format(batch, n))
@@ -125,4 +144,4 @@ def generator(batch, size):
             images.append(r[0])
             labels.append(r[1])
 
-        yield np.array(images), np.array(labels)
+        yield np.array(images), np.array(labels)    
