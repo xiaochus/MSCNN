@@ -22,7 +22,7 @@ def main(argv):
         help="The image size of train sample.")
     parser.add_argument(
         "--batch",
-        default=6,
+        default=3,
         help="The number of train samples per batch.")
     parser.add_argument(
         "--epochs",

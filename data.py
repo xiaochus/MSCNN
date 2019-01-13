@@ -9,18 +9,16 @@ import matplotlib.pyplot as plt
 
 
 def visualization(img, dmap):
-    img *= 255
-    img = img[..., ::-1]
-
     plt.figure()
 
     plt.subplot(121)
     plt.imshow(img)
 
     plt.subplot(122)
-    plt.imshow(dmap.reshape(56, 56))
-    plt.colorbar()
+    plt.imshow(dmap[:, :, 0])
+#    plt.colorbar()
 
+    plt.tight_layout()
     plt.show()
 
 
@@ -38,40 +36,26 @@ def read_annotations():
     return count, position
 
 
-def read_img(i):
-    """Read img accoding to the image_key.
-
-    Arguments:
-        i: int, image_key.
-
-    Returns:
-        img: ndarray, img.
-    """
-    name = 'data\\mall_dataset\\frames\\seq_{}.jpg'.format(str(i + 1).zfill(6))
-    img = cv2.imread(name)
-    img = img / 255.
-
-    return img
-
-
-def map_pixels(img, image_key, annotations):
+def map_pixels(img, image_key, annotations, size):
     """map annotations to density map.
 
     Arguments:
         img: ndarray, img.
         image_key: int, image_key.
         annotations: ndarray, annotations.
+        size: resize size.
 
     Returns:
         pixels: ndarray, density map.
     """
-    gaussian_kernel = 15
+    gaussian_kernel = 5
     h, w = img.shape[:-1]
-    pixels = np.zeros((h, w))
+    sh, sw = size / h, size / w
+    pixels = np.zeros((size, size))
 
     for a in annotations[image_key][0][0][0]:
-        x, y = int(a[0]), int(a[1])
-        if y >= h or x >= w:
+        x, y = int(a[0] * sw), int(a[1] * sh)
+        if y >= size or x >= size:
             print("{},{} is out of range, skipping annotation for {}".format(x, y, image_key))
         else:
             pixels[y, x] += 1
@@ -93,13 +77,14 @@ def get_data(i, size, annotations):
         img: ndarray, img.
         density_map: ndarray, density map.
     """
-    img = read_img(i)
-    density_map = map_pixels(img, i, annotations)
+    name = 'data\\mall_dataset\\frames\\seq_{}.jpg'.format(str(i + 1).zfill(6))
+    img = cv2.imread(name)
+
+    density_map = map_pixels(img, i, annotations, size // 4)
 
     img = cv2.resize(img, (size, size))
+    img = img / 255.
 
-    ms = int(size / 4)
-    density_map = cv2.resize(density_map, (ms, ms))
     density_map = np.expand_dims(density_map, axis=-1)
 
     return img, density_map
@@ -120,7 +105,7 @@ def generator(indices, batch, size):
     count, position = read_annotations()
 
     i = 0
-    n = len(count)
+    n = count.shape[0]
 
     if batch > n:
         raise Exception('Batch size {} is larger than the number of dataset {}!'.format(batch, n))
@@ -145,3 +130,12 @@ def generator(indices, batch, size):
             labels.append(r[1])
 
         yield np.array(images), np.array(labels)    
+
+
+if __name__ == '__main__':
+    count, position = read_annotations()
+    img, density_map = get_data(0, 224, position)
+
+    print(count[0][0])
+    print(int(np.sum(density_map)))
+    visualization(img, density_map)
