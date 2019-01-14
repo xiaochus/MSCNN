@@ -22,7 +22,8 @@ A Python 3 and Keras 2 implementation of MSCNN for people countingand provide tr
 
 [Mall Dataset crowd counting dataset](http://personal.ie.cuhk.edu.hk/~ccloy/downloads_mall_dataset.html)
 
-Generate density_map from data：
+Generate density_map from data:
+
 ![density map](/images/density_map.png)
 
 **train**
@@ -31,6 +32,13 @@ run the follow command:
 ```
 python train.py --size 224 --batch 16 --epochs 100
 ```
+
+**test in dataset**
+```
+real count:30
+pred count:27
+```
+![res](/images/res1.png)
 
 ## Reference
 
