@@ -5,7 +5,7 @@ import sys
 import argparse
 import pandas as pd
 
-from keras.optimizers import RMSprop
+from keras.optimizers import SGD
 from keras.callbacks import ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 
@@ -22,11 +22,11 @@ def main(argv):
         help="The image size of train sample.")
     parser.add_argument(
         "--batch",
-        default=3,
+        default=2,
         help="The number of train samples per batch.")
     parser.add_argument(
         "--epochs",
-        default=100,
+        default=10,
         help="The number of train iterations.")
 
     args = parser.parse_args()
@@ -47,12 +47,12 @@ def train(batch, epochs, size):
 
     model = MSCNN((size, size, 3))
 
-    opt = RMSprop(lr=1e-3)
+    opt = SGD(lr=1e-5, momentum=0.9, decay=0.0005)
     model.compile(optimizer=opt, loss='mse')
 
-    lr = ReduceLROnPlateau(monitor='loss', min_lr=1e-5)
+    lr = ReduceLROnPlateau(monitor='loss', min_lr=1e-7)
 
-    indices = list(range(2000))
+    indices = list(range(1500))
     train, test = train_test_split(indices, test_size=0.25)
 
     hist = model.fit_generator(
@@ -63,7 +63,7 @@ def train(batch, epochs, size):
         epochs=epochs,
         callbacks=[lr])
 
-    model.save_weights('model\final_weights.h5')
+    model.save_weights('model\\final_weights.h5')
 
     df = pd.DataFrame.from_dict(hist.history)
     df.to_csv('model\\history.csv', index=False, encoding='utf-8')

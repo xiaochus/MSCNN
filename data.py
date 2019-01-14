@@ -48,7 +48,7 @@ def map_pixels(img, image_key, annotations, size):
     Returns:
         pixels: ndarray, density map.
     """
-    gaussian_kernel = 5
+    gaussian_kernel = 15
     h, w = img.shape[:-1]
     sh, sw = size / h, size / w
     pixels = np.zeros((size, size))
@@ -105,13 +105,13 @@ def generator(indices, batch, size):
     count, position = read_annotations()
 
     i = 0
-    n = count.shape[0]
+    n = len(indices)
 
     if batch > n:
         raise Exception('Batch size {} is larger than the number of dataset {}!'.format(batch, n))
 
     while True:
-        if i + batch > n:
+        if i + batch >= n:
             np.random.shuffle(indices)
             i = 0
             continue
@@ -129,13 +129,16 @@ def generator(indices, batch, size):
             images.append(r[0])
             labels.append(r[1])
 
-        yield np.array(images), np.array(labels)    
+        images = np.array(images)
+        labels = np.array(labels)
+
+        yield images, labels    
 
 
 if __name__ == '__main__':
     count, position = read_annotations()
-    img, density_map = get_data(0, 224, position)
+    img, density_map = get_data(10, 224, position)
 
-    print(count[0][0])
+    print(count[10][0])
     print(int(np.sum(density_map)))
     visualization(img, density_map)
